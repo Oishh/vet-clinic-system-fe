@@ -1,4 +1,5 @@
 import Joi from "joi-browser";
+import PocketBase from 'pocketbase';
 import { Button } from "primereact/button";
 import { confirmDialog } from "primereact/confirmdialog";
 import { DataView } from "primereact/dataview";
@@ -8,9 +9,9 @@ import { FileUpload } from "primereact/fileupload";
 import { Image } from "primereact/image";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
-import clientService from "../../common/services/clientService";
-import patientService from "../../common/services/patientService";
 import Input from "../../common/components/Input";
+
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
 
 export default function ManagePatient() {
   const [patient, setPatient] = useState("");
@@ -29,9 +30,11 @@ export default function ManagePatient() {
 
   const fetchPatients = async () => {
     try {
-      const data = await patientService.retrievePatients();
-      const patients = data.data;
-      setPatient(patients);
+      const data = await pb.collection('patient').getFullList({
+        sort: '-created',
+    });
+      setPatient(data);
+      // console.log(data);
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -39,9 +42,11 @@ export default function ManagePatient() {
 
   const fetchClients = async () => {
     try {
-      const data = await clientService.retrieveClients();
-      const clients = data.data;
-      setClients(clients);
+      const data = await pb.collection('client').getFullList({
+        sort: '-created',
+    });
+      setClients(data);
+      console.log(data);
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -134,22 +139,19 @@ export default function ManagePatient() {
       if (fileDataURL != null) {
         const _patientDetails = { ...patientDetails };
         _patientDetails["base64Data"] = fileDataURL;
+        _patientDetails["client"] = selectedClient.id;
 
         if (selectedClient !== "") {
-          await patientService.updatePatient(
-            selectedClient.id,
-            newPatient.id,
-            _patientDetails
-          );
+          await pb.collection('patient').update(newPatient.id, _patientDetails);
+
           const table = { ...newPatient, ...patientDetails };
-          table.client.fullname = selectedClient.fullname;
+          table.fullname = selectedClient.fullname;
           updateTable(newPatient.id, table);
         } else {
-          await patientService.updatePatient(
-            newPatient.client.id,
-            newPatient.id,
-            _patientDetails
-          );
+          const _patientDetails = { ...patientDetails };
+          _patientDetails["client"] = newPatient.client.id;
+          await pb.collection('patient').update(newPatient.id, _patientDetails);
+
           const table = { ...newPatient, ...patientDetails };
           updateTable(newPatient.id, table);
         }
@@ -158,20 +160,19 @@ export default function ManagePatient() {
         updateTable(newPatient.id, table);
       } else {
         if (selectedClient !== "") {
-          await patientService.updatePatient(
-            selectedClient.id,
-            newPatient.id,
-            patientDetails
-          );
+          const _patientDetails = { ...patientDetails };
+          _patientDetails["client"] = selectedClient.id;
+
+          await pb.collection('patient').update(newPatient.id, _patientDetails);
+
           const table = { ...newPatient, ...patientDetails };
-          table.client.fullname = selectedClient.fullname;
+          table.fullname = selectedClient.fullname;
           updateTable(newPatient.id, table);
         } else {
-          await patientService.updatePatient(
-            newPatient.client.id,
-            newPatient.id,
-            patientDetails
-          );
+          const _patientDetails = { ...patientDetails };
+          _patientDetails["client"] = newPatient.client.id;
+          await pb.collection('patient').update(newPatient.id, _patientDetails);
+
           const table = { ...newPatient, ...patientDetails };
           updateTable(newPatient.id, table);
         }
@@ -180,14 +181,10 @@ export default function ManagePatient() {
       setEdit(false);
       toastSuccess("updated");
     } catch (ex) {
-      if (ex.response.data.status === 409) {
-        const message = ex.response.data.error;
-        toastError(message);
-      } else {
-        setEdit(false);
-        const message = "An unexpected error occured";
-        toastError(message);
-      }
+      console.log(ex);
+      setEdit(false);
+      const message = "An unexpected error occured";
+      toastError(message);
     }
   };
 
@@ -209,8 +206,8 @@ export default function ManagePatient() {
   };
 
   const handleDeleteButton = (id) => {
-    const accept = () => {
-      patientService.deletePatientById(id);
+    const accept = async () => {
+      await pb.collection('patient').delete(id);
       toastSuccess("deleted");
       const updatedPatients = [...patient];
 
@@ -240,6 +237,15 @@ export default function ManagePatient() {
       accept,
       reject,
     });
+  };
+
+  const getClientName = (clientId) => {
+    for (let i = 0; i < client.length; i++) {
+      if(client[i].id === clientId) {
+        console.log(client[i].fullname);
+        return client[i].fullname;
+      }      
+    }
   };
 
   const gridItem = (patient) => {
@@ -274,7 +280,7 @@ export default function ManagePatient() {
               className="p-button p-component p-button-outlined p-button-primary w-6 mr-2"
               onClick={() => {
                 setView(true);
-                setViewClient({ ...patient.client });
+                setViewClient(getClientName(patient.client));
                 setViewPatient({ ...patient });
               }}
             >
@@ -546,7 +552,7 @@ export default function ManagePatient() {
                   <span className="text-1000 flex-wrap font-medium mb-2">
                     <i className="fas fa-user mr-2"></i>
                     <span className="bg-blue-50 text-blue-400 border-round inline-flex py-1 px-2 text-sm">
-                      {viewClient.fullname}
+                      {viewClient}
                     </span>
                   </span>
                 </div>

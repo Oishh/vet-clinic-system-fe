@@ -1,13 +1,15 @@
 import Joi from "joi-browser";
+import PocketBase from 'pocketbase';
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Toast } from "primereact/toast";
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Input from "../common/components/Input";
 import logo from "../resources/blue-bubbles-icon.jpg";
 import bg from "../resources/vet background.jpg";
-import Input from "../common/components/Input";
-import securityService from "../common/services/securityService";
+
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
 
 function Login() {
   const [accountDetails, setAccountDetails] = useState("");
@@ -39,24 +41,24 @@ function Login() {
   };
 
   const submitForm = async (e) => {
-    const _token =
-      "Basic " +
-      window.btoa(accountDetails.username + ":" + accountDetails.password);
     try {
-      const response = await securityService.executeBasicAuthService(_token);
+      const authData = await pb.admins.authWithPassword(
+          accountDetails.username,
+          accountDetails.password,
+      );
 
-      if (response.status === 200) {
+      if (pb.authStore.isValid) {
         navigate("/blue-bubbles/dashboard");
         localStorage.setItem("username", accountDetails.username);
-        localStorage.setItem("token", _token);
+        localStorage.setItem("token", authData.token);
       } else {
-        toastError("An unexpected error occured");
+        toastError("Invalid Credentials.");
         localStorage.removeItem("token");
         localStorage.removeItem("username");
       }
+
     } catch (ex) {
-      const message = "An unexpected error occured";
-      toastError(message);
+      toastError("An unexpected error occured");
       localStorage.removeItem("token");
       localStorage.removeItem("username");
     }

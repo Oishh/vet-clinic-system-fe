@@ -1,12 +1,14 @@
 import Joi from "joi-browser";
+import PocketBase from 'pocketbase';
 import { confirmDialog } from "primereact/confirmdialog";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
-import clientService from "../../common/services/clientService";
-import patientService from "../../common/services/patientService";
-import Input from "../../common/components/Input";
 import CustDropdown from "../../common/components/Dropdown";
+import Input from "../../common/components/Input";
+
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
+
 
 export default function CreatePatient() {
   const [patientDetails, setPatientDetails] = useState("");
@@ -19,9 +21,10 @@ export default function CreatePatient() {
 
   const fetchClients = async () => {
     try {
-      const data = await clientService.retrieveClients();
-      const clients = data.data;
-      setClient(clients);
+      const data = await pb.collection('client').getFullList({
+        sort: '-created',
+    });
+      setClient(data);
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -86,11 +89,10 @@ export default function CreatePatient() {
     try {
       const _patientDetails = { ...patientDetails };
       _patientDetails["base64Data"] = fileDataURL;
+      _patientDetails["client"] = selectedClient.id;
 
-      await patientService.createPatientForClient(
-        selectedClient.id,
-        _patientDetails
-      );
+      pb.collection('patient').create(_patientDetails);
+
       toastSuccess("created");
     } catch (ex) {
       console.log(ex);

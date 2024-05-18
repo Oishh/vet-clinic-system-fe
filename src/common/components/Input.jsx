@@ -1,6 +1,9 @@
 import { InputText } from "primereact/inputtext";
 import { useState } from "react";
 import { Calendar } from "primereact/calendar";
+import { IconField } from 'primereact/iconfield';
+import { InputIcon } from 'primereact/inputicon';
+        
 
 const Input = ({
   name,
@@ -23,8 +26,8 @@ const Input = ({
       <label htmlFor={name} className="text-900 font-medium mb-2">
         {label}
       </label>
-      <span className="p-input-icon-left">
-        <i className={`${icon} pt-1`} />
+      <IconField iconPosition="left">
+        <InputIcon className={`${icon} pt-1`}/>
         <Calendar
           {...rest}
           type={type}
@@ -33,7 +36,7 @@ const Input = ({
           // placeholder={label}
           className={`${error ? "p-invalid" : null} mt-2`}
         />
-      </span>
+      </IconField>
       {error && <div className="text-center p-error">{error}</div>}
     </div>;
   }
@@ -44,8 +47,8 @@ const Input = ({
         <label htmlFor={name} className="text-900 font-medium mb-2">
           {label}
         </label>
-        <span className="p-input-icon-left">
-          <i className={`${icon} pt-1`} />
+        <IconField iconPosition="left">
+          <InputIcon className={`${icon} pt-1`}/>
           <InputText
             {...rest}
             type={type}
@@ -54,7 +57,7 @@ const Input = ({
             // placeholder={label}
             className={`${error ? "p-invalid" : null} mt-2`}
           />
-        </span>
+        </IconField>
         {error && <div className="text-center p-error">{error}</div>}
       </div>
     );
@@ -64,25 +67,17 @@ const Input = ({
         <label htmlFor={name} className="text-900 font-medium mb-2">
           {label}
         </label>
-        <span className="p-input-icon-left p-input-icon-right">
-          <i className={`${icon} pt-1`} />
+        <IconField iconPosition="left">
+          <InputIcon className={`${icon} pt-1`}/>
           <InputText
             {...rest}
             id={name}
             name={name}
             // placeholder={label}
-            type={inputType}
+            type="password"
             className={`${error ? "p-invalid" : null} mt-2`}
           />
-          {toggleMask && (
-            <i
-              className={`${
-                inputType === "text" ? "fas fa-eye" : "fas fa-eye-slash"
-              } pt-1`}
-              onClick={toggleInputType}
-            />
-          )}
-        </span>
+        </IconField>
         {error && <div className="text-center p-error">{error}</div>}
       </div>
     );

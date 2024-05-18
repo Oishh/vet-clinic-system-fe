@@ -150,16 +150,6 @@ function Sidebar({
                       } ml-2`}
                     ></i>
                   </div>
-                  <span
-                    role="presentation"
-                    className="p-ink"
-                    style={{
-                      height: "254px",
-                      width: "254px",
-                      top: "-97px",
-                      left: "108px",
-                    }}
-                  ></span>
                 </a>
                 <ul
                   className={`list-none py-0 pl-3 pr-0 m-0 overflow-y-hidden transition-all transition-duration-400 transition-ease-in-out ${
@@ -209,16 +199,6 @@ function Sidebar({
                       } ml-2`}
                     ></i>
                   </div>
-                  <span
-                    role="presentation"
-                    className="p-ink"
-                    style={{
-                      height: "254px",
-                      width: "254px",
-                      top: "-97px",
-                      left: "108px",
-                    }}
-                  ></span>
                 </a>
                 <ul
                   className={`list-none py-0 pl-3 pr-0 m-0 overflow-y-hidden transition-all transition-duration-400 transition-ease-in-out ${
@@ -282,16 +262,6 @@ function Sidebar({
                       } ml-2`}
                     ></i>
                   </div>
-                  <span
-                    role="presentation"
-                    className="p-ink"
-                    style={{
-                      height: "254px",
-                      width: "254px",
-                      top: "-97px",
-                      left: "108px",
-                    }}
-                  ></span>
                 </a>
                 <ul
                   className={`list-none py-0 pl-3 pr-0 m-0 overflow-y-hidden transition-all transition-duration-400 transition-ease-in-out ${
@@ -341,16 +311,6 @@ function Sidebar({
                       } ml-2`}
                     ></i>
                   </div>
-                  <span
-                    role="presentation"
-                    className="p-ink"
-                    style={{
-                      height: "254px",
-                      width: "254px",
-                      top: "-97px",
-                      left: "108px",
-                    }}
-                  ></span>
                 </a>
                 <ul
                   className={`list-none py-0 pl-3 pr-0 m-0 overflow-y-hidden transition-all transition-duration-400 transition-ease-in-out ${
@@ -437,16 +397,6 @@ function Sidebar({
                   setting ? "pi pi-chevron-down" : "pi pi-chevron-up"
                 } ml-auto`}
               ></i>
-              <span
-                role="presentation"
-                className="p-ink"
-                style={{
-                  height: "248px",
-                  width: "248px",
-                  top: "-111.003px",
-                  left: "63px",
-                }}
-              ></span>
             </a>
           </div>
         </div>

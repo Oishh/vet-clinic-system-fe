@@ -1,8 +1,10 @@
 import Joi from "joi-browser";
+import PocketBase from 'pocketbase';
 import { Toast } from "primereact/toast";
 import { useRef, useState } from "react";
-import clientService from "../../common/services/clientService";
 import Input from "../../common/components/Input";
+
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
 
 function CreateClients() {
   const [clientDetails, setClientDetails] = useState("");
@@ -40,7 +42,7 @@ function CreateClients() {
 
   const submitForm = async () => {
     try {
-      await clientService.createClient(clientDetails);
+      pb.collection('client').create(clientDetails);
       toastSuccess("created");
     } catch (ex) {
       const message = "An unexpected error occured";

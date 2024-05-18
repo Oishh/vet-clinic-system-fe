@@ -5,11 +5,13 @@ import { DataView } from "primereact/dataview";
 import { Dialog } from "primereact/dialog";
 import { Toast } from "primereact/toast";
 import React, { useEffect, useRef, useState } from "react";
-import clientService from "../../common/services/clientService";
 import Input from "../../common/components/Input";
+import PocketBase from 'pocketbase';
+
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
 
 export default function ManageClients() {
-  const [clients, setClients] = useState("");
+  const [clients, setClients] = useState([]);
   const [viewPatients, setViewPatients] = useState([]);
   const [viewAppointments, setViewAppointments] = useState([]);
   const toast = useRef(null);
@@ -22,9 +24,13 @@ export default function ManageClients() {
 
   const fetchClients = async () => {
     try {
-      const data = await clientService.retrieveClients();
-      const clients = data.data;
-      setClients(clients);
+      const data = await pb.collection('client').getFullList({
+          sort: '-created',
+      });
+      console.log(data);
+
+      setClients(data);
+      
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -91,7 +97,7 @@ export default function ManageClients() {
 
   const updateClient = async () => {
     try {
-      await clientService.updateClient(newClient.id, clientDetails);
+      await pb.collection('client').update(newClient.id, clientDetails);
 
       const table = { ...newClient, ...clientDetails };
       updateTable(newClient.id, table);
@@ -128,8 +134,8 @@ export default function ManageClients() {
   };
 
   const handleDeleteButton = (id) => {
-    const accept = () => {
-      clientService.deleteClientById(id);
+    const accept = async () => {
+      await pb.collection('client').delete(id);
 
       toastSuccess("deleted");
       const updatedClients = [...clients];
