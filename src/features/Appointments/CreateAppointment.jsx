@@ -1,10 +1,11 @@
 import Joi from "joi-browser";
+import PocketBase from 'pocketbase';
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
-import appointmentService from "../../common/services/appointmentService";
-import clientService from "../../common/services/clientService";
 import Input from "../../common/components/Input";
 import CustDropdown from "./../../common/components/Dropdown";
+
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
 
 function CreateAppointment() {
   const [appointmentDetails, setAppointmentDetails] = useState("");
@@ -22,9 +23,10 @@ function CreateAppointment() {
 
   const fetchClients = async () => {
     try {
-      const data = await clientService.retrieveClients();
-      const clients = data.data;
-      setClient(clients);
+      const data = await pb.collection('client').getFullList({
+          sort: '-created',
+      });
+      setClient(data);
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -54,10 +56,11 @@ function CreateAppointment() {
 
   const submitForm = async () => {
     try {
-      await appointmentService.createAppointmentForClient(
-        selectedClient.id,
-        appointmentDetails
-      );
+      const _appointmentDetails = { ...appointmentDetails };
+      _appointmentDetails["status"] = "IN PROGRESS";
+      _appointmentDetails["client"] = selectedClient.id;
+
+      await pb.collection('appointment').create(_appointmentDetails);
       toastSuccess("created");
     } catch (ex) {
       const message = "An unexpected error occured";

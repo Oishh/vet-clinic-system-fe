@@ -42,7 +42,7 @@ function CreateClients() {
 
   const submitForm = async () => {
     try {
-      pb.collection('client').create(clientDetails);
+      await pb.collection('client').create(clientDetails);
       toastSuccess("created");
     } catch (ex) {
       const message = "An unexpected error occured";

@@ -1,4 +1,5 @@
 import Joi from "joi-browser";
+import PocketBase from 'pocketbase';
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
@@ -7,13 +8,13 @@ import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
-import appointmentService from "../../common/services/appointmentService";
-import clientService from "../../common/services/clientService";
 import Input from "../../common/components/Input";
 
+const pb = new PocketBase('https://vet-clinic-syst.pockethost.io');
+
 export default function ManageAppointment() {
-  const [appointment, setAppointment] = useState(null);
-  const [client, setClients] = useState("");
+  const [appointment, setAppointment] = useState([]);
+  const [client, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState("");
   const [visible, setVisible] = useState(false);
   const [newAppointment, setNewAppointment] = useState([]);
@@ -23,9 +24,10 @@ export default function ManageAppointment() {
 
   const fetchClients = async () => {
     try {
-      const data = await clientService.retrieveClients();
-      const clients = data.data;
-      setClients(clients);
+      const data = await pb.collection('client').getFullList({
+          sort: '-created',
+      });
+      setClients(data);
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -33,14 +35,15 @@ export default function ManageAppointment() {
 
   const fetchAppointments = async () => {
     try {
-      const data = await appointmentService.retrieveAppointments();
-      const appointments = data.data;
-      let updatedAppointments = { ...appointments };
+      const data = await pb.collection('appointment').getFullList({
+          sort: '-created',
+      });
+      let updatedAppointments = { ...data };
       var appointmentHours = {};
       var appointmentMinutes = {};
       var appointmentTime = {};
 
-      for (let x = 0; x < appointments.length; x++) {
+      for (let x = 0; x < data.length; x++) {
         let hours = updatedAppointments[x].time;
         if (parseInt(hours) < 10) {
           appointmentHours = hours.slice(0, 2);
@@ -61,7 +64,7 @@ export default function ManageAppointment() {
         updatedAppointments[x].time = appointmentTime;
       }
 
-      setAppointment(appointments);
+      setAppointment(data);
     } catch (error) {
       toastError("An unexpected error occured");
     }
@@ -145,36 +148,22 @@ export default function ManageAppointment() {
 
   const updateAppointment = async () => {
     try {
-      if (selectedClient !== "") {
-        await appointmentService.updateAppointment(
-          selectedClient.id,
-          newAppointment.id,
-          appointmentDetails
-        );
-        const table = { ...newAppointment, ...appointmentDetails };
-        table.client.fullname = selectedClient.fullname;
-        updateTable(newAppointment.id, table);
-      } else {
-        await appointmentService.updateAppointment(
-          newAppointment.client.id,
-          newAppointment.id,
-          appointmentDetails
-        );
-        const table = { ...newAppointment, ...appointmentDetails };
-        updateTable(newAppointment.id, table);
-      }
+      const _appointmentDetails = { ...appointmentDetails };
+      delete _appointmentDetails.fullname;
+      _appointmentDetails["status"] = "IN PROGRESS";
+      _appointmentDetails["client"] = selectedClient.id;
 
+
+      await pb.collection('appointment').update(newAppointment.id, _appointmentDetails);
+
+      updateTable(newAppointment.id, _appointmentDetails);
+      
       setVisible(false);
       toastSuccess("updated");
     } catch (ex) {
-      if (ex.response.data.status === 409) {
-        const message = ex.response.data.error;
-        toastError(message);
-      } else {
-        setVisible(false);
-        const message = "An unexpected error occured";
-        toastError(message);
-      }
+      setVisible(false);
+      const message = "An unexpected error occured";
+      toastError(message);
     }
   };
 
@@ -197,13 +186,16 @@ export default function ManageAppointment() {
 
   const updateStatus = async (rowData, toastTitle) => {
     try {
-      await appointmentService.toggleStatus(rowData.id);
       const updatedAppointmentStatus = { ...rowData };
+      updatedAppointmentStatus["client"] = rowData.client.id;
       if (updatedAppointmentStatus.status === "IN PROGRESS") {
         updatedAppointmentStatus.status = "COMPLETED";
       } else {
         updatedAppointmentStatus.status = "IN PROGRESS";
       }
+      
+      await pb.collection('appointment').update(rowData.id, updatedAppointmentStatus);
+
       updateTable(updatedAppointmentStatus.id, updatedAppointmentStatus);
       toastSuccess(toastTitle);
     } catch (ex) {
@@ -312,6 +304,7 @@ export default function ManageAppointment() {
         className="p-button-text"
       />
       <Button
+        disabled={selectedClient === ""}
         label="Save"
         icon="pi pi-check"
         onClick={handleSubmit}
@@ -320,12 +313,22 @@ export default function ManageAppointment() {
     </div>
   );
 
+
+  const joinedTableData = appointment.map(_appointment => {
+    const _client = client.find(client => client.id === _appointment.client);
+    return {
+      ..._appointment,
+      client: _client
+    };
+  });
+
+
   return (
     <div>
       <section className="surface-card shadow-3 border-round p-4">
         <Toast ref={toast} />
         <DataTable
-          value={appointment}
+          value={joinedTableData}
           paginator
           rows={10}
           rowsPerPageOptions={[10, 25, 50]}

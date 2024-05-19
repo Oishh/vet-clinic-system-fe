@@ -31,8 +31,8 @@ export default function ManagePatient() {
   const fetchPatients = async () => {
     try {
       const data = await pb.collection('patient').getFullList({
-        sort: '-created',
-    });
+          sort: '-created',
+      });
       setPatient(data);
       // console.log(data);
     } catch (error) {
@@ -45,6 +45,7 @@ export default function ManagePatient() {
       const data = await pb.collection('client').getFullList({
         sort: '-created',
     });
+
       setClients(data);
       console.log(data);
     } catch (error) {
@@ -144,7 +145,7 @@ export default function ManagePatient() {
         if (selectedClient !== "") {
           await pb.collection('patient').update(newPatient.id, _patientDetails);
 
-          const table = { ...newPatient, ...patientDetails };
+          const table = { ...newPatient, ..._patientDetails };
           table.fullname = selectedClient.fullname;
           updateTable(newPatient.id, table);
         } else {
@@ -152,7 +153,7 @@ export default function ManagePatient() {
           _patientDetails["client"] = newPatient.client.id;
           await pb.collection('patient').update(newPatient.id, _patientDetails);
 
-          const table = { ...newPatient, ...patientDetails };
+          const table = { ...newPatient, ..._patientDetails };
           updateTable(newPatient.id, table);
         }
 
@@ -165,7 +166,7 @@ export default function ManagePatient() {
 
           await pb.collection('patient').update(newPatient.id, _patientDetails);
 
-          const table = { ...newPatient, ...patientDetails };
+          const table = { ...newPatient, ..._patientDetails };
           table.fullname = selectedClient.fullname;
           updateTable(newPatient.id, table);
         } else {
@@ -173,7 +174,7 @@ export default function ManagePatient() {
           _patientDetails["client"] = newPatient.client.id;
           await pb.collection('patient').update(newPatient.id, _patientDetails);
 
-          const table = { ...newPatient, ...patientDetails };
+          const table = { ...newPatient, ..._patientDetails };
           updateTable(newPatient.id, table);
         }
       }
@@ -270,7 +271,7 @@ export default function ManagePatient() {
               </span>
               <span className="text-600 font-medium mb-2">{patient.breed}</span>
               <span className="bg-blue-50 text-blue-400 border-round inline-flex py-1 px-2 text-sm">
-                {patient.client.fullname}
+                {getClientName(patient.client)}
               </span>
             </div>
           </div>
@@ -292,7 +293,7 @@ export default function ManagePatient() {
               className="p-button p-component p-button-outlined p-button-secondary w-6 ml-2"
               onClick={() => {
                 setEdit(true);
-                const fullname = patient.client.fullname;
+                const fullname = getClientName(patient.client);
                 const { name, age, breed, base64Data, weight } = patient;
                 setPatientDetails({
                   fullname,
@@ -353,6 +354,7 @@ export default function ManagePatient() {
         className="p-button-text"
       />
       <Button
+        disabled={selectedClient === ""}
         label="Save"
         icon="pi pi-check"
         onClick={handleSubmit}
@@ -430,7 +432,7 @@ export default function ManagePatient() {
             </label>
             <Dropdown
               name="client"
-              value={selectedClient || newPatient.client}
+              value={selectedClient}
               onChange={(e) => setSelectedClient(e.value)}
               options={client}
               optionLabel="fullname"
